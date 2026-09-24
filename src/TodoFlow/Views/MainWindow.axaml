@@ -1,0 +1,391 @@
+<Window
+    x:Class="TodoFlow.Views.MainWindow"
+    x:DataType="vm:MainWindowViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:TodoFlow.ViewModels"
+    Title="TodoFlow"
+    Width="1180"
+    Height="760"
+    MinWidth="960"
+    MinHeight="640"
+    WindowStartupLocation="CenterScreen"
+    Background="{DynamicResource AppBackgroundBrush}"
+    Opened="OnOpened">
+
+  <Grid RowDefinitions="Auto,*">
+    <Border Grid.Row="0" Padding="28,22,28,18">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel>
+          <TextBlock Classes="h1" Text="TodoFlow" />
+          <TextBlock Classes="muted" Margin="1,4,0,0" Text="{Binding TodayText}" />
+        </StackPanel>
+
+        <Border Grid.Column="1" Classes="panel" Padding="18,12">
+          <Grid ColumnDefinitions="Auto,Auto">
+            <StackPanel>
+              <TextBlock Classes="label" Margin="0" Text="完成进度" />
+              <TextBlock FontSize="18" FontWeight="SemiBold" Text="{Binding ProgressText}" />
+            </StackPanel>
+            <ProgressBar
+                Grid.Column="1"
+                Width="190"
+                Height="9"
+                Margin="18,0,0,0"
+                VerticalAlignment="Center"
+                Minimum="0"
+                Maximum="100"
+                Value="{Binding CompletionPercent}" />
+          </Grid>
+        </Border>
+      </Grid>
+    </Border>
+
+    <Grid Grid.Row="1" Margin="24,0,24,24" ColumnDefinitions="2*,1*">
+      <Border Grid.Column="0" Classes="panel" Padding="20">
+        <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+          <Border Grid.Row="0" Classes="softPanel" Padding="14">
+            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+              <TextBox
+                  Grid.Row="0"
+                  Grid.Column="0"
+                  Margin="0,0,10,10"
+                  Watermark="要完成什么？"
+                  Text="{Binding NewTitle}">
+                <TextBox.KeyBindings>
+                  <KeyBinding Gesture="Enter" Command="{Binding AddCommand}" />
+                </TextBox.KeyBindings>
+              </TextBox>
+
+              <Button
+                  Grid.Row="0"
+                  Grid.Column="1"
+                  Margin="0,0,0,10"
+                  Classes="primary"
+                  Command="{Binding AddCommand}"
+                  Content="添加任务" />
+
+              <TextBox
+                  Grid.Row="1"
+                  Grid.Column="0"
+                  Grid.ColumnSpan="2"
+                  Margin="0,0,0,10"
+                  Watermark="备注（可选）"
+                  Text="{Binding NewNotes}" />
+
+              <Grid
+                  Grid.Row="2"
+                  Grid.Column="0"
+                  Grid.ColumnSpan="2"
+                  ColumnDefinitions="Auto,112,8,Auto,8,Auto,8,Auto,*">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Margin="2,0,8,0"
+                    Classes="muted"
+                    FontSize="12"
+                    Text="优先级" />
+                <ComboBox
+                    Grid.Column="1"
+                    ItemsSource="{Binding PriorityOptions}"
+                    SelectedItem="{Binding NewPriority}" />
+                <DatePicker
+                    Grid.Column="3"
+                    Width="158"
+                    SelectedDate="{Binding NewDueDate}" />
+                <Button
+                    Grid.Column="5"
+                    Classes="ghost"
+                    Command="{Binding SetDueTodayCommand}"
+                    Content="今天" />
+                <Button
+                    Grid.Column="7"
+                    Classes="ghost"
+                    Command="{Binding SetDueTomorrowCommand}"
+                    Content="明天" />
+                <Button
+                    Grid.Column="9"
+                    HorizontalAlignment="Left"
+                    Classes="ghost"
+                    Command="{Binding ClearDueDateCommand}"
+                    Content="清除日期" />
+              </Grid>
+            </Grid>
+          </Border>
+
+          <Grid Grid.Row="1" Margin="0,16,0,0" ColumnDefinitions="Auto,*,Auto">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <ToggleButton
+                  Classes="filter"
+                  Command="{Binding ShowAllCommand}"
+                  Content="全部"
+                  IsChecked="{Binding IsAllFilter, Mode=OneWay}" />
+              <ToggleButton
+                  Classes="filter"
+                  Command="{Binding ShowActiveCommand}"
+                  Content="进行中"
+                  IsChecked="{Binding IsActiveFilter, Mode=OneWay}" />
+              <ToggleButton
+                  Classes="filter"
+                  Command="{Binding ShowCompletedCommand}"
+                  Content="已完成"
+                  IsChecked="{Binding IsCompletedFilter, Mode=OneWay}" />
+            </StackPanel>
+
+            <TextBox
+                Grid.Column="1"
+                Margin="16,0,16,0"
+                Watermark="搜索标题或备注"
+                Text="{Binding SearchText}" />
+
+            <Button
+                Grid.Column="2"
+                Classes="ghost"
+                Command="{Binding ClearCompletedCommand}"
+                Content="清除已完成" />
+          </Grid>
+
+          <Grid Grid.Row="2" Margin="2,12,2,4" ColumnDefinitions="*,Auto">
+            <TextBlock Classes="muted" FontSize="12" Text="{Binding VisibleCountText}" />
+            <TextBlock Grid.Column="1" Classes="muted" FontSize="12">
+              <Run Text="进行中 " />
+              <Run FontWeight="SemiBold" Text="{Binding ActiveCount}" />
+              <Run Text="  ·  已完成 " />
+              <Run FontWeight="SemiBold" Text="{Binding CompletedCount}" />
+            </TextBlock>
+          </Grid>
+
+          <Grid Grid.Row="3" Margin="0,8,0,0">
+            <ListBox
+                IsVisible="{Binding HasVisibleTodos}"
+                ItemsSource="{Binding VisibleTodos}"
+                SelectedItem="{Binding SelectedTodo}"
+                SelectionMode="Single"
+                ScrollViewer.VerticalScrollBarVisibility="Auto">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:TodoItemViewModel">
+                  <Border Classes="todoCard">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                      <CheckBox
+                          Grid.Column="0"
+                          Margin="0,0,12,0"
+                          VerticalAlignment="Top"
+                          IsChecked="{Binding IsCompleted}" />
+
+                      <StackPanel Grid.Column="1" Spacing="6">
+                        <TextBlock
+                            FontSize="15"
+                            FontWeight="SemiBold"
+                            Text="{Binding Title}"
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            Classes="muted"
+                            FontSize="12"
+                            IsVisible="{Binding HasNotes}"
+                            MaxHeight="36"
+                            Text="{Binding Notes}"
+                            TextTrimming="CharacterEllipsis"
+                            TextWrapping="Wrap" />
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                          <Border Background="#EEF2FF" CornerRadius="9" Padding="8,3">
+                            <TextBlock
+                                FontSize="11"
+                                Foreground="{DynamicResource AccentBrush}"
+                                Text="{Binding PriorityText}" />
+                          </Border>
+                          <TextBlock
+                              VerticalAlignment="Center"
+                              Classes="muted"
+                              FontSize="11"
+                              Text="{Binding DueDateText}" />
+                          <TextBlock
+                              VerticalAlignment="Center"
+                              Classes="muted"
+                              FontSize="11"
+                              Text="{Binding StatusText}" />
+                        </StackPanel>
+                      </StackPanel>
+
+                      <Button
+                          Grid.Column="2"
+                          Margin="12,0,0,0"
+                          VerticalAlignment="Top"
+                          Classes="ghost"
+                          Command="{Binding DeleteCommand}"
+                          Content="删除" />
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                IsVisible="{Binding HasNoVisibleTodos}"
+                Spacing="10">
+              <Border
+                  Width="58"
+                  Height="58"
+                  HorizontalAlignment="Center"
+                  Background="#E7EDFF"
+                  CornerRadius="18">
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontSize="28"
+                    Foreground="{DynamicResource AccentBrush}"
+                    Text="✓" />
+              </Border>
+              <TextBlock
+                  HorizontalAlignment="Center"
+                  FontSize="18"
+                  FontWeight="SemiBold"
+                  Text="{Binding EmptyStateTitle}" />
+              <TextBlock
+                  MaxWidth="340"
+                  HorizontalAlignment="Center"
+                  Classes="muted"
+                  Text="{Binding EmptyStateHint}"
+                  TextAlignment="Center"
+                  TextWrapping="Wrap" />
+            </StackPanel>
+          </Grid>
+
+          <Grid Grid.Row="4" Margin="2,14,2,0" ColumnDefinitions="*,Auto">
+            <TextBlock
+                VerticalAlignment="Center"
+                Classes="muted"
+                FontSize="11"
+                Text="{Binding StatusMessage}" />
+            <TextBlock
+                Grid.Column="1"
+                MaxWidth="400"
+                VerticalAlignment="Center"
+                Classes="muted"
+                FontSize="10"
+                Text="{Binding DataFilePath}"
+                TextTrimming="CharacterEllipsis" />
+          </Grid>
+        </Grid>
+      </Border>
+
+      <Border
+          Grid.Column="1"
+          Classes="panel"
+          Margin="18,0,0,0"
+          Padding="20"
+          IsVisible="{Binding HasSelection}">
+        <Grid RowDefinitions="Auto,*,Auto">
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel>
+              <TextBlock Classes="sectionTitle" Text="任务详情" />
+              <TextBlock
+                  Classes="muted"
+                  Margin="0,4,0,0"
+                  Text="{Binding SelectedTodo.CreatedAtText}" />
+            </StackPanel>
+            <Button
+                Grid.Column="1"
+                Classes="danger"
+                Command="{Binding DeleteSelectedCommand}"
+                Content="删除任务" />
+          </Grid>
+
+          <ScrollViewer Grid.Row="1" Margin="0,18,0,12">
+            <StackPanel Spacing="14">
+              <StackPanel>
+                <TextBlock Classes="label" Text="标题" />
+                <TextBox
+                    AcceptsReturn="False"
+                    Text="{Binding Editor.Title}"
+                    Watermark="任务标题" />
+              </StackPanel>
+
+              <StackPanel>
+                <TextBlock Classes="label" Text="备注" />
+                <TextBox
+                    MinHeight="96"
+                    AcceptsReturn="True"
+                    Text="{Binding Editor.Notes}"
+                    TextWrapping="Wrap"
+                    Watermark="补充说明（可选）" />
+              </StackPanel>
+
+              <StackPanel>
+                <TextBlock Classes="label" Text="优先级" />
+                <ComboBox
+                    ItemsSource="{Binding PriorityOptions}"
+                    SelectedItem="{Binding Editor.Priority}" />
+              </StackPanel>
+
+              <StackPanel>
+                <TextBlock Classes="label" Text="截止日期" />
+                <DatePicker SelectedDate="{Binding Editor.DueDate}" />
+              </StackPanel>
+
+              <Border Classes="softPanel" Padding="12">
+                <StackPanel Spacing="4">
+                  <TextBlock
+                      FontSize="12"
+                      FontWeight="SemiBold"
+                      Text="{Binding SelectedTodo.StatusText}" />
+                  <TextBlock
+                      Classes="muted"
+                      FontSize="11"
+                      Text="{Binding SelectedTodo.DueDateText}" />
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </ScrollViewer>
+
+          <StackPanel
+              Grid.Row="2"
+              Orientation="Horizontal"
+              HorizontalAlignment="Right"
+              Spacing="10">
+            <Button Classes="ghost" Command="{Binding Editor.CancelCommand}" Content="取消" />
+            <Button Classes="primary" Command="{Binding Editor.SaveCommand}" Content="保存修改" />
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <Border
+          Grid.Column="1"
+          Classes="panel"
+          Margin="18,0,0,0"
+          Padding="28"
+          IsVisible="{Binding HasNoSelection}">
+        <StackPanel
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Spacing="12">
+          <Border
+              Width="64"
+              Height="64"
+              HorizontalAlignment="Center"
+              Background="#EEF2FF"
+              CornerRadius="20">
+            <TextBlock
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                FontSize="30"
+                Foreground="{DynamicResource AccentBrush}"
+                Text="☰" />
+          </Border>
+          <TextBlock
+              HorizontalAlignment="Center"
+              FontSize="19"
+              FontWeight="SemiBold"
+              Text="选择一项任务" />
+          <TextBlock
+              MaxWidth="250"
+              HorizontalAlignment="Center"
+              Classes="muted"
+              Text="点击左侧列表中的任务，可以查看并编辑详情。"
+              TextAlignment="Center"
+              TextWrapping="Wrap" />
+        </StackPanel>
+      </Border>
+    </Grid>
+  </Grid>
+</Window>
